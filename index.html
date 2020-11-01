@@ -53,6 +53,135 @@
 
 	<script>
 
+		// keep track of all guesses
+		players = []
+
+		function addGuess(player, correct) {
+
+			// if player already in array, get guesses
+			// then remove
+			foundIndex = players.findIndex(element => element.name == player);
+			found = players[foundIndex]
+
+			if (found) {
+				correctGuesses == found.guesses
+				if (correct) {
+					correctGuesses = found.correct + 1
+				}
+
+				players.splice(foundIndex, 1)
+
+				players.push({
+					name: player,
+					guesses: found.guesses + 1,
+					correct: correctGuesses
+				})
+			} else {
+				correctGuesses = 0
+				if (correct) {
+					correctGuesses = 1
+				}
+
+				players.push({
+					name: player,
+					guesses: 1,
+					correct: correctGuesses
+				})
+
+			}
+
+			renderTables(players)
+		}
+
+		function tableHTML(data, table) {
+			var tbl_body = "";
+			var odd_even = false;
+			$.each(data, function () {
+				var tbl_row = "";
+				$.each(this, function (k, v) {
+					tbl_row += "<td>" + v + "</td>";
+				});
+				tbl_body += "<tr class=\"" + (odd_even ? "odd" : "even") + "\">" + tbl_row + "</tr>";
+				odd_even = !odd_even;
+			});
+
+			//return tbl_body;
+			$(`${table} tbody`).html(tbl_body);
+		}
+
+		function renderTables(players) {
+
+			/*
+			realPlayers = players
+
+			players = [
+				{ name: "A", guesses: 3415, correct: 1 },
+				{ name: "B", guesses: 534, correct: 2 },
+				{ name: "C", guesses: 4315634, correct: 3 },
+				{ name: "D", guesses: 354, correct: 4 },
+				realPlayers[0]
+			]
+			*/
+
+			guesses = []
+			players.forEach(function (player) {
+				guesses.push({
+					name: player.name,
+					guesses: player.guesses,
+					correct: player.correct / player.guesses
+				})
+			})
+
+			function sortGuesses(a, b) {
+				if (a.correct < b.correct) {
+					return 1;
+				}
+				if (a.correct > b.correct) {
+					return -1;
+				}
+				return 0;
+			}
+
+			guesses = guesses.sort(sortGuesses);
+
+			rankedGuesses = []
+			for (i = 0; i < guesses.length; i++) {
+				rankedGuesses.push({
+					rank: i + 1,
+					name: guesses[i].name,
+					guesses: guesses[i].guesses,
+					correct: Math.floor(guesses[i].correct * 100) + "%",
+				})
+			}
+
+			tableHTML(rankedGuesses, "#guesses")
+
+
+			numberwangs = []
+			players.forEach(function (player) {
+				if (player.correct > 0) {
+					numberwangs.push({
+						name: player.name,
+						correct: player.correct
+					})
+				}
+			})
+
+			numberwangs = numberwangs.sort(sortGuesses);
+
+			rankedWangs = []
+			for (i = 0; i < numberwangs.length; i++) {
+				rankedWangs.push({
+					rank: i + 1,
+					name: numberwangs[i].name,
+					correct: numberwangs[i].correct
+				})
+			}
+
+			tableHTML(rankedWangs, "#numberwangs")
+		}
+
+
 		roundNumber = 0;
 
 		wangModulizer = 16;
@@ -76,7 +205,7 @@
 			// Remove any decimal points
 			modulizedGuess = Math.floor(modulizedGuess)
 
-			console.log(`${player}: ${guess} (${modulizedGuess}) ${currentNumberwang}`);
+			//console.log(`${ player }: ${ guess }(${ modulizedGuess }) ${ currentNumberwang }`);
 
 			return (modulizedGuess == currentNumberwang)
 		}
@@ -87,13 +216,19 @@
 				'');
 		};
 
+		function currentTime() {
 
-		function rotateTheBoard() {
-			// TODO: if rotation was too recent, notify in chat?
 			var d = new Date();
 			var n = d.getHours() + ":" + d.getMinutes() + ":" + d.getSeconds();
 			// TODO: zero-pad time
-			$("#twitch-chat").prepend(`<p>${n} - ${player} rotated the board</p>`);
+
+			return n
+		}
+
+
+		function rotateTheBoard() {
+			// TODO: if rotation was too recent, notify in chat?
+			$("#twitch-chat").prepend(`<p>${currentTime()} - ${player} rotated the board</p>`);
 
 			$("body").addClass("rotate")
 			setTimeout(function () {
@@ -141,11 +276,8 @@
 
 
 
-				var d = new Date();
-				// TODO: zero-pad time
-				var n = d.getHours() + ":" + d.getMinutes() + ":" + d.getSeconds();
-
 				if (player == "StrawberryUtopia" &&
+					// SEASON 2
 					// TODO: allow other players to trigger it
 					// e.g. allow players who have won to trigger it once per win
 					safeMessage == "!rotate") {
@@ -154,14 +286,16 @@
 					safeMessage == "!clear") {
 					$("#twitch-chat").html("")
 				} else {
-					$("#twitch-chat").prepend(`<p>${n} - ${player}: ${safeMessage}</p >`);
+					$("#twitch-chat").prepend(`<p>${currentTime()} - ${player}: ${safeMessage}</p>`);
 				}
 			} else {
 
 				// SEASON 2
+				// TODO: WANGERNUMB
+
+				// SEASON 2
 				// TODO: if user is guessing sequentially, warn that this is
 				// not in the spirit of Numberwang
-
 
 				if (isNumberwang(player, message)) {
 					$("#twitch-chat").prepend(`
@@ -169,18 +303,21 @@
 	<h4>${player} guessed ${safeMessage}</h4>
 	<img src="thats-numberwang.gif" />
 </div>
-`)
+				`)
+					addGuess(player, true)
 
 					roundNumber++
 					$("#roundNumber").text(roundNumber)
 
 				} else {
+
 					$("#twitch-chat").prepend(`
 <div id="numberwang-alert" class="alert alert-dismissable alert-info">
 	<h4>${player} guessed ${safeMessage}</h4>
 	<span>That's Not Numberwang!</span>
 </div>
 `)
+					addGuess(player, false)
 				}
 			}
 		});
@@ -224,9 +361,9 @@
 			</div>
 			<div class="col-md-4">
 				<h3>
-					Guesses This Round
+					Guesses This Season
 				</h3>
-				<table class="table table-sm">
+				<table id="guesses" class="table table-sm">
 					<thead>
 						<tr>
 							<th>
@@ -238,24 +375,16 @@
 							<th>
 								Guesses
 							</th>
+							<th>
+								Accuracy
+							</th>
 						</tr>
 					</thead>
 					<tbody>
-						<tr>
-							<td>
-								1
-							</td>
-							<td>
-								StrawberryUtopia
-							</td>
-							<td>
-								69
-							</td>
-						</tr>
 					</tbody>
 				</table>
 			</div>
-			<div class="col-md-4">
+			<div id="numberwangs" class="col-md-4">
 				<h3>
 					Numberwangs!
 				</h3>
@@ -275,17 +404,6 @@
 						</tr>
 					</thead>
 					<tbody>
-						<tr>
-							<td>
-								1
-							</td>
-							<td>
-								StrawberryUtopia
-							</td>
-							<td>
-								420
-							</td>
-						</tr>
 					</tbody>
 				</table>
 			</div>
