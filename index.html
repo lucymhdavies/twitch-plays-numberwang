@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+	<meta charset="utf-8">
+	<meta http-equiv="X-UA-Compatible" content="IE=edge">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+
+	<title>Twitch Plays Numberwang!</title>
+
+	<meta name="description" content="Source code generated using layoutit.com">
+	<meta name="author" content="LayoutIt!">
+
+	<link href="css/bootstrap.min.css" rel="stylesheet">
+	<link href="css/style.css" rel="stylesheet">
+
+
+	<script src="https://github.com/tmijs/tmi.js/releases/download/v1.5.0/tmi.js"></script>
+
+	<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.4.1/jquery.js"></script>
+
+	<script src=https://cdnjs.cloudflare.com/ajax/libs/seedrandom/2.3.10/seedrandom.min.js>
+	</script>
+
+	<style>
+		.rotate {
+			-webkit-animation: spin 1s ease-in-out;
+			-moz-animation: spin 1s ease-in-out;
+			animation: spin 1s ease-in-out;
+		}
+
+		@-moz-keyframes spin {
+			100% {
+				-webkit-transform: rotate(360deg);
+				transform: rotate(360deg);
+			}
+		}
+
+		@-webkit-keyframes spin {
+			100% {
+				-webkit-transform: rotate(360deg);
+				transform: rotate(360deg);
+			}
+		}
+
+		@keyframes spin {
+			100% {
+				-webkit-transform: rotate(360deg);
+				transform: rotate(360deg);
+			}
+		}
+	</style>
+
+	<script>
+
+		roundNumber = 0;
+
+		wangModulizer = 16;
+
+		function isNumberwang(player, guess) {
+
+			Math.seedrandom(player + roundNumber);
+
+			currentNumberwang = Math.floor(Math.random() * wangModulizer)
+
+			if (guess < 0) {
+				negativityCompensator = Math.floor(Math.random() * wangModulizer)
+
+				modulizedGuess = (
+					(guess * negativityCompensator * -1)
+				) % wangModulizer
+			} else {
+				modulizedGuess = guess % wangModulizer
+			}
+
+			// Remove any decimal points
+			modulizedGuess = Math.floor(modulizedGuess)
+
+			console.log(`${player}: ${guess} (${modulizedGuess}) ${currentNumberwang}`);
+
+			return (modulizedGuess == currentNumberwang)
+		}
+
+		sanitize = function (input) {
+			return input.replace(
+				/<(|\/|[^>\/bi]|\/[^>bi]|[^\/>][^>]+|\/[^>][^>]+)>/g,
+				'');
+		};
+
+
+		function rotateTheBoard() {
+			// TODO: if rotation was too recent, notify in chat?
+			var d = new Date();
+			var n = d.getHours() + ":" + d.getMinutes() + ":" + d.getSeconds();
+			// TODO: zero-pad time
+			$("#twitch-chat").prepend(`<p>${n} - ${player} rotated the board</p>`);
+
+			$("body").addClass("rotate")
+			setTimeout(function () {
+
+				$("body").removeClass("rotate")
+			}, 1000 * 15)
+		}
+
+		const client = new tmi.Client({
+			connection: {
+				secure: true,
+				reconnect: true
+			},
+			channels: ['strawberryutopia']
+		});
+
+		client.connect();
+
+		client.on('message', (channel, tags, message, self) => {
+
+			// TODO: rate limit guesses to 5 seconds ish?
+			// Or just put chat into slow mode 5s
+
+			// TODO: keep track of number of guesses
+
+			// TODO: keep track of number of successfull guesses
+
+			player = tags['display-name']
+
+			safeMessage = sanitize(message)
+
+
+
+			// SEASON 2
+			// TODO: easter eggs
+			// i.e. "shinty six" as a valid number
+			// "schiffy five"
+
+			if (isNaN(message)) {
+
+				// SEASON 2
+				// TODO: Get admins from this
+				// http://tmi.twitch.tv/group/user/strawberryutopia/chatters
+				// for things like !rotate and !clear
+
+
+
+				var d = new Date();
+				// TODO: zero-pad time
+				var n = d.getHours() + ":" + d.getMinutes() + ":" + d.getSeconds();
+
+				if (player == "StrawberryUtopia" &&
+					// TODO: allow other players to trigger it
+					// e.g. allow players who have won to trigger it once per win
+					safeMessage == "!rotate") {
+					rotateTheBoard(player)
+				} else if (player == "StrawberryUtopia" &&
+					safeMessage == "!clear") {
+					$("#twitch-chat").html("")
+				} else {
+					$("#twitch-chat").prepend(`<p>${n} - ${player}: ${safeMessage}</p >`);
+				}
+			} else {
+
+				// SEASON 2
+				// TODO: if user is guessing sequentially, warn that this is
+				// not in the spirit of Numberwang
+
+
+				if (isNumberwang(player, message)) {
+					$("#twitch-chat").prepend(`
+<div id="numberwang-alert" class="alert alert-dismissable alert-success">
+	<h4>${player} guessed ${safeMessage}</h4>
+	<img src="thats-numberwang.gif" />
+</div>
+`)
+
+					roundNumber++
+					$("#roundNumber").text(roundNumber)
+
+				} else {
+					$("#twitch-chat").prepend(`
+<div id="numberwang-alert" class="alert alert-dismissable alert-info">
+	<h4>${player} guessed ${safeMessage}</h4>
+	<span>That's Not Numberwang!</span>
+</div>
+`)
+				}
+			}
+		});
+	</script>
+
+</head>
+
+<body>
+
+	<div class="container-fluid">
+		<div class="row">
+			<div class="col-md-12">
+				<div class="jumbotron">
+					<h2>
+						Twitch Plays Numberwang! <small>Season One, Round <span id="roundNumber">0</span></small>
+					</h2>
+
+					<p>
+						Numberwang is chosen by complex mathematical algorithms (lol), and is NOT random.
+					</p>
+
+					<p>
+						Drop your guesses in chat!
+					</p>
+				</div>
+				<!--
+					Do something with this. i.e. how close are players to guessing? SEASON 2
+				<div class="progress">
+					<div class="progress-bar w-75">
+					</div>
+				</div>
+			-->
+			</div>
+		</div>
+		<div class="row">
+			<div class="col-md-4">
+				<h3>
+					Chat
+				</h3>
+				<div id="twitch-chat"></div>
+			</div>
+			<div class="col-md-4">
+				<h3>
+					Guesses This Round
+				</h3>
+				<table class="table table-sm">
+					<thead>
+						<tr>
+							<th>
+								#
+							</th>
+							<th>
+								Player
+							</th>
+							<th>
+								Guesses
+							</th>
+						</tr>
+					</thead>
+					<tbody>
+						<tr>
+							<td>
+								1
+							</td>
+							<td>
+								StrawberryUtopia
+							</td>
+							<td>
+								69
+							</td>
+						</tr>
+					</tbody>
+				</table>
+			</div>
+			<div class="col-md-4">
+				<h3>
+					Numberwangs!
+				</h3>
+
+				<table class="table table-sm">
+					<thead>
+						<tr>
+							<th>
+								#
+							</th>
+							<th>
+								Player
+							</th>
+							<th>
+								Numberwangs
+							</th>
+						</tr>
+					</thead>
+					<tbody>
+						<tr>
+							<td>
+								1
+							</td>
+							<td>
+								StrawberryUtopia
+							</td>
+							<td>
+								420
+							</td>
+						</tr>
+					</tbody>
+				</table>
+			</div>
+		</div>
+	</div>
+
+	<script src="js/jquery.min.js"></script>
+	<script src="js/bootstrap.min.js"></script>
+	<script src="js/scripts.js"></script>
+</body>
+
+</html>
