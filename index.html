@@ -110,19 +110,6 @@
 		}
 
 		function renderTables(players) {
-
-			/*
-			realPlayers = players
-
-			players = [
-				{ name: "A", guesses: 3415, correct: 1 },
-				{ name: "B", guesses: 534, correct: 2 },
-				{ name: "C", guesses: 4315634, correct: 3 },
-				{ name: "D", guesses: 354, correct: 4 },
-				realPlayers[0]
-			]
-			*/
-
 			guesses = []
 			players.forEach(function (player) {
 				guesses.push({
@@ -251,10 +238,7 @@
 
 			// TODO: rate limit guesses to 5 seconds ish?
 			// Or just put chat into slow mode 5s
-
-			// TODO: keep track of number of guesses
-
-			// TODO: keep track of number of successfull guesses
+			// SEASON 2: in-app rate limiting
 
 			player = tags['display-name']
 
