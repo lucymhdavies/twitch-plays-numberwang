@@ -235,7 +235,7 @@
 				secure: true,
 				reconnect: true
 			},
-			channels: ['strawberryutopia']
+			channels: ['desertbus']
 		});
 
 		client.connect();
@@ -266,13 +266,13 @@
 
 
 
-				if (player == "StrawberryUtopia" &&
+				if (player == "desertbus" &&
 					// SEASON 2
 					// TODO: allow other players to trigger it
 					// e.g. allow players who have won to trigger it once per win
 					safeMessage == "!rotate") {
 					rotateTheBoard(player)
-				} else if (player == "StrawberryUtopia" &&
+				} else if (player == "desertbus" &&
 					safeMessage == "!clear") {
 					$("#twitch-chat").html("")
 				} else {
@@ -322,7 +322,7 @@
 			<div class="col-md-12">
 				<div class="jumbotron">
 					<h2>
-						Twitch Plays Numberwang! <small>Season One, Round <span id="roundNumber">0</span></small>
+						Twitch Plays Numberwang! <small>Season One point Fourteen and a Half, Round <span id="roundNumber">0</span></small>
 					</h2>
 
 					<p>
